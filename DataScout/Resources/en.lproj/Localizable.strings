@@ -1,0 +1,14 @@
+/* English localization - DataScout */
+"app_name" = "DataScout";
+"cellular" = "Cellular Data";
+"wifi" = "Wi-Fi";
+"dashboard" = "Dashboard";
+"statistics" = "Statistics";
+"domains" = "Domains";
+"plans" = "Data Plans";
+"settings" = "Settings";
+"free_data" = "remaining data";
+"used_data" = "Data used";
+"safe_daily_budget" = "Safe Daily Budget";
+"days_remaining" = "Days remaining";
+"unlimited" = "Unlimited Plan";

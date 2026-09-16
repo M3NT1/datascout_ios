@@ -1,0 +1,14 @@
+/* Magyar lokalizáció - DataScout */
+"app_name" = "DataScout";
+"cellular" = "Mobilinternet";
+"wifi" = "Wi-Fi";
+"dashboard" = "Áttekintés";
+"statistics" = "Statisztikák";
+"domains" = "Domainek";
+"plans" = "Adatkeretek";
+"settings" = "Beállítások";
+"free_data" = "szabad adatkeret";
+"used_data" = "Elhasznált adat";
+"safe_daily_budget" = "Napi javasolt kvóta";
+"days_remaining" = "Hátralévő napok";
+"unlimited" = "Korlátlan csomag";
