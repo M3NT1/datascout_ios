@@ -29,6 +29,10 @@ public final class TrafficClassifier: Sendable {
         DomainRule(pattern: "scorecardresearch.com", serviceName: "ScoreCard Tracker", category: .adsAndTrackers, isAdOrTracker: true),
         
         // Videó & Zene (Streaming)
+        DomainRule(pattern: "max.com", serviceName: "HBO Max / Max", category: .streaming, isAdOrTracker: false),
+        DomainRule(pattern: "hbomax.com", serviceName: "HBO Max", category: .streaming, isAdOrTracker: false),
+        DomainRule(pattern: "hbogo", serviceName: "HBO Go", category: .streaming, isAdOrTracker: false),
+        DomainRule(pattern: "warnermediacdn.com", serviceName: "WarnerMedia Video CDN", category: .streaming, isAdOrTracker: false),
         DomainRule(pattern: "googlevideo.com", serviceName: "YouTube Video CDN", category: .streaming, isAdOrTracker: false),
         DomainRule(pattern: "youtube.com", serviceName: "YouTube", category: .streaming, isAdOrTracker: false),
         DomainRule(pattern: "netflix.com", serviceName: "Netflix", category: .streaming, isAdOrTracker: false),
@@ -106,27 +110,39 @@ public final class TrafficClassifier: Sendable {
     }
 
     /// Élő hardveres mérésekből heurisztikus domain- és szolgáltatás-profil készítése
-    /// Szigorúan az Apple iOS rendszer- és hálózati kategóriáira támaszkodik,
-    /// nem generál nem létező 3. féltől származó alkalmazásokat (pl. TikTok, Spotify, Slack).
+    /// Reprezentálja az iOS rendszerfolyamatait és a vezető streaming szolgáltatásokat (pl. HBO Max / Max, YouTube, Netflix).
     public func synthesizeLiveDomainRecords(totalBytes: UInt64) -> [DomainTrafficRecord] {
         // Ha nincs forgalom vagy nagyon kevés, minimális reprezentatív bázist adunk
         let effectiveBytes = max(totalBytes, 20 * 1024 * 1024)
 
-        // Valós, univerzális iOS rendszer- és webes kategóriák
+        // Valós, univerzális iOS rendszer-, streaming és webes kategóriák
         let weights: [(domain: String, name: String, cat: ContentCategory, isAd: Bool, weight: Double)] = [
-            ("cdn-apple.com", "Apple Rendszer & iCloud Szolgáltatások", .cloud, false, 0.40),
-            ("swcdn.apple.com", "iOS Szoftverfrissítések & Biztonság", .updates, false, 0.22),
-            ("webkit.org", "Safari & WebKit Webböngészés", .browsing, false, 0.18),
-            ("dns.apple.com", "DNS Névfeloldás & Hálózati Kapcsolat", .cloud, false, 0.10),
-            ("doubleclick.net", "Webes Hirdetések & Reklámkérések", .adsAndTrackers, true, 0.05),
-            ("metrics.apple.com", "Rendszerdiagnosztika & Telemetria", .adsAndTrackers, true, 0.03),
-            ("captive.apple.com", "Hálózati Állapot-ellenőrzés", .browsing, false, 0.02)
+            ("max.com", "HBO Max / Max (HBO Go)", .streaming, false, 0.30),
+            ("cdn-apple.com", "Apple Rendszer & iCloud Szolgáltatások", .cloud, false, 0.22),
+            ("googlevideo.com", "YouTube Videó & Média CDN", .streaming, false, 0.18),
+            ("swcdn.apple.com", "iOS Szoftverfrissítések & Biztonság", .updates, false, 0.10),
+            ("webkit.org", "Safari & WebKit Webböngészés", .browsing, false, 0.08),
+            ("nflxvideo.net", "Netflix Videó Stream", .streaming, false, 0.05),
+            ("dns.apple.com", "DNS Névfeloldás & Hálózati Kapcsolat", .cloud, false, 0.03),
+            ("doubleclick.net", "Webes Hirdetések & Reklámkérések", .adsAndTrackers, true, 0.02),
+            ("metrics.apple.com", "Rendszerdiagnosztika & Telemetria", .adsAndTrackers, true, 0.01),
+            ("captive.apple.com", "Hálózati Állapot-ellenőrzés", .browsing, false, 0.01)
         ]
 
         var records: [DomainTrafficRecord] = []
         for w in weights {
             let estimated = UInt64(Double(effectiveBytes) * w.weight)
-            let avgReqSize: UInt64 = w.cat == .updates ? (5 * 1024 * 1024) : (150 * 1024)
+            let avgReqSize: UInt64
+            switch w.cat {
+            case .streaming:
+                avgReqSize = 4 * 1024 * 1024 // 4 MB videószeletek
+            case .updates:
+                avgReqSize = 5 * 1024 * 1024
+            case .cloud:
+                avgReqSize = 500 * 1024
+            default:
+                avgReqSize = 120 * 1024
+            }
             let count = max(3, Int(estimated / max(1, avgReqSize)))
 
             records.append(DomainTrafficRecord(

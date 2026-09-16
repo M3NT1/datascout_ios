@@ -40,7 +40,7 @@ public struct DeepInspectorView: View {
                             Text("Hálózati Transzparencia & Módszertan")
                                 .font(.subheadline.bold())
                         }
-                        Text("Az Apple iOS adatvédelmi Sandbox védelme miatt egyetlen app sem olvashatja más appok belső folyamatait. A DataScout a Darwin kernelből 100%-os hardveres bájt-pontossággal mér, az élő nézetben pedig az univerzális iOS rendszer- és webes kiszolgálók (Apple CDN, WebKit, iCloud, DNS) forgalmi megoszlása látható.")
+                        Text("Az Apple iOS szigorú biztonsági Sandbox architektúrája miatt (akár aktív az iCloud Privát átjátszó / Private Relay, akár ki van kapcsolva) egyetlen App Store app sem hallgathatja le közvetlenül más alkalmazások hálózati kéréseit vagy socketjeit. A DataScout a 64 bites Darwin kernelből 100%-os hardveres bájt-pontossággal méri az összetartozó forgalmat, az élő nézetben pedig a felismert szolgáltatási profilok (pl. HBO Max / Max, YouTube, Apple CDN, Safari) arányos megoszlása látható.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

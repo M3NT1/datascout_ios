@@ -26,6 +26,15 @@ final class TrafficClassifierTests: XCTestCase {
 
         let gh = classifier.classify(domain: "raw.githubusercontent.com")
         XCTAssertEqual(gh.category, .work)
+
+        let hbo = classifier.classify(domain: "play.max.com")
+        XCTAssertEqual(hbo.category, .streaming)
+        XCTAssertEqual(hbo.serviceName, "HBO Max / Max")
+        XCTAssertFalse(hbo.isAdOrTracker)
+
+        let hbogo = classifier.classify(domain: "hbogo.hu")
+        XCTAssertEqual(hbogo.category, .streaming)
+        XCTAssertEqual(hbogo.serviceName, "HBO Go")
     }
 
     /// 2. Teszteli a reklám- és követőstatisztikák aggregációját
@@ -42,5 +51,16 @@ final class TrafficClassifierTests: XCTestCase {
         XCTAssertEqual(stats.adTrackerRequests, 40)
         XCTAssertEqual(stats.estimatedAdBytes, 60_000_000)
         XCTAssertEqual(stats.adTrackerRatio, 40.0 / 140.0, accuracy: 0.001)
+    }
+
+    /// 3. Teszteli a szintetizált élő domain rekordokat, benne az HBO Max / Max és rendszer szolgáltatásokkal
+    func testSynthesizeLiveDomainRecords() {
+        let records = classifier.synthesizeLiveDomainRecords(totalBytes: 500 * 1024 * 1024)
+        XCTAssertFalse(records.isEmpty)
+
+        let hbo = records.first(where: { $0.domain == "max.com" })
+        XCTAssertNotNil(hbo)
+        XCTAssertEqual(hbo?.category, .streaming)
+        XCTAssertGreaterThan(hbo?.estimatedBytes ?? 0, 0)
     }
 }

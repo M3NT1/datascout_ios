@@ -120,8 +120,8 @@ public struct LiveTrafficStreamView: View {
                                 particleCount: 4
                             )
 
-                            // Kimenő ágak a célállomások felé
-                            let outSpeed = max(vm.currentTotalSpeed, 1024)
+                            // Kimenő ágak a célállomások felé (csak ha van valós forgalom)
+                            let outSpeed = vm.currentTotalSpeed
 
                             drawStreamPath(
                                 ctx: ctx,
@@ -173,7 +173,7 @@ public struct LiveTrafficStreamView: View {
                             icon: "antenna.radiowaves.left.and.right",
                             color: Color(red: 0.0, green: 0.85, blue: 0.5),
                             position: cellPos,
-                            isActive: vm.currentCellularSpeed > 100
+                            isActive: vm.currentCellularSpeed > 0
                         )
 
                         nodeView(
@@ -183,7 +183,7 @@ public struct LiveTrafficStreamView: View {
                             icon: "wifi",
                             color: Color(red: 0.4, green: 0.5, blue: 1.0),
                             position: wifiPos,
-                            isActive: vm.currentWifiSpeed > 100
+                            isActive: vm.currentWifiSpeed > 0
                         )
 
                         // Központi iPhone Nodus (Hub)
@@ -202,8 +202,8 @@ public struct LiveTrafficStreamView: View {
                         destinationNodeView(
                             type: .mediaWeb,
                             title: "Média & Web",
-                            subtitle: "Safari, WebKit",
-                            icon: "safari",
+                            subtitle: "HBO, Média, Web",
+                            icon: "play.tv.fill",
                             color: .orange,
                             position: destMediaPos
                         )
@@ -284,16 +284,17 @@ public struct LiveTrafficStreamView: View {
             lineWidth: 2
         )
 
-        // Vándorló részecskék számítása a görbén
+        // Ha a pillanatnyi sebesség 0 B/s (nincs forgalom az adott ágon), nem utazhatnak gömbök!
+        guard speed > 0 else { return }
+
+        // Vándorló részecskék számítása a görbén csakis valós forgalom esetén
         let speedMultiplier: Double
         if speed > 1024 * 1024 { // > 1 MB/s: gyors
             speedMultiplier = 0.95
         } else if speed > 50 * 1024 { // 50 KB - 1 MB: közepes
             speedMultiplier = 0.55
-        } else if speed > 0 { // kis forgalom
+        } else { // Alacsony, de létező forgalom (> 0 B/s)
             speedMultiplier = 0.28
-        } else { // Inaktív lebegés
-            speedMultiplier = 0.10
         }
 
         for i in 0..<particleCount {
@@ -516,10 +517,10 @@ public struct LiveTrafficStreamView: View {
                 )
             case .mediaWeb:
                 nodeInfo(
-                    icon: "safari",
+                    icon: "play.tv.fill",
                     color: .orange,
-                    title: "Média & Safari Böngészés",
-                    desc: "WebKit weboldal-letöltések, képek, videó streamek és interaktív böngészési adatfolyam."
+                    title: "Média, Videó & Web",
+                    desc: "HBO Max / Max, YouTube, videó- és hangstreamek, WebKit és Safari böngészési adatfolyam."
                 )
             case .adsTrackers:
                 nodeInfo(
