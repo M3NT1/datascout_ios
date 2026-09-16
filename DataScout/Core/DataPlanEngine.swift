@@ -164,6 +164,50 @@ public final class DataPlanEngine: Sendable {
         let isCritical = !isUnlimited && usedPercent >= plan.criticalThresholdPercent
         let isWarning = !isUnlimited && usedPercent >= plan.warningThresholdPercent
 
+        // MARK: - Keretkimerülési Dátum Előrejelzés (Runout Forecast)
+        var runoutDate: Date? = nil
+        var daysUntilRunout: Int? = nil
+        var isRunoutBeforeCycleEnd = false
+        var forecastMsg = ""
+        var velocity = 1.0
+
+        if isUnlimited {
+            forecastMsg = "Korlátlan adatkeret – nincs kimerülési kockázat."
+        } else if remainingBytes <= 0 {
+            forecastMsg = "Az adatkeret kimerült!"
+            daysUntilRunout = 0
+            runoutDate = date
+            isRunoutBeforeCycleEnd = true
+            velocity = 2.0
+        } else {
+            let idealDailyBudget = Double(totalQuota) / Double(totalDaysInPeriod)
+            let dailyBurnRate = Double(totalUsedBytes) / Double(elapsedDays)
+            velocity = idealDailyBudget > 0 ? (dailyBurnRate / idealDailyBudget) : 1.0
+
+            if dailyBurnRate > 0 {
+                let daysLeft = Int(Double(remainingBytes) / dailyBurnRate)
+                daysUntilRunout = daysLeft
+                runoutDate = calendar.date(byAdding: .day, value: daysLeft, to: date)
+
+                let formatter = DateFormatter()
+                formatter.locale = Locale(identifier: "hu_HU")
+                formatter.dateFormat = "MMMM d."
+                let runoutStr = runoutDate.map { formatter.string(from: $0) } ?? "hamarosan"
+
+                if daysLeft < daysRemaining {
+                    isRunoutBeforeCycleEnd = true
+                    let diffDays = max(1, daysRemaining - daysLeft)
+                    forecastMsg = "A jelenlegi tempóval a kereted várhatóan \(runoutStr) napon elfogy – \(diffDays) nappal a fordulónap előtt!"
+                } else {
+                    isRunoutBeforeCycleEnd = false
+                    let projectedRemaining = max(0, totalQuota - projectedEndOfPeriodBytes)
+                    forecastMsg = "Kitart a fordulónapig! Várható szabad keret a ciklus végén: \(ByteFormatter.format(projectedRemaining))."
+                }
+            } else {
+                forecastMsg = "Még nincs elegendő forgalmi előzmény a pontos kimerülési előrejelzéshez."
+            }
+        }
+
         return PlanCalculatedStatus(
             currentPeriodStart: periodStart,
             currentPeriodEnd: periodEnd,
@@ -179,7 +223,12 @@ public final class DataPlanEngine: Sendable {
             projectedEndOfPeriodBytes: projectedEndOfPeriodBytes,
             isExceeded: isExceeded,
             isWarning: isWarning,
-            isCritical: isCritical
+            isCritical: isCritical,
+            runoutDate: runoutDate,
+            daysUntilRunout: daysUntilRunout,
+            isRunoutBeforeCycleEnd: isRunoutBeforeCycleEnd,
+            forecastMessage: forecastMsg,
+            burnRateVelocity: velocity
         )
     }
 }

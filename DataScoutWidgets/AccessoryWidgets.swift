@@ -17,6 +17,7 @@ public struct AccessoryCircularView: View {
 }
 
 /// Téglalap alakú zárolási képernyő és StandBy widget (accessoryRectangular)
+/// Tartalmazza a keretkimerülési előrejelzést (Forecast).
 public struct AccessoryRectangularView: View {
     public let payload: AppGroupBridge.SharedWidgetPayload
 
@@ -37,9 +38,18 @@ public struct AccessoryRectangularView: View {
             ProgressView(value: min(100.0, payload.cellularPercent), total: 100.0)
                 .progressViewStyle(.linear)
 
-            Text("Napi kvóta: \(ByteFormatter.format(payload.safeDailyBudgetBytes))")
-                .font(.system(size: 9))
-                .foregroundColor(.secondary)
+            if payload.isRunoutWarning && !payload.runoutDateString.isEmpty {
+                Text("⚠️ Elfogy: \(payload.runoutDateString)")
+                    .font(.system(size: 9, weight: .bold))
+            } else if !payload.runoutDateString.isEmpty {
+                Text(payload.runoutDateString == "Fordulóig kitart" ? "✓ Fordulóig kitart" : "Kitart: \(payload.runoutDateString)")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            } else {
+                Text("Napi kvóta: \(ByteFormatter.format(payload.safeDailyBudgetBytes))")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
         }
     }
 }
@@ -51,7 +61,11 @@ public struct AccessoryInlineView: View {
     public var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "antenna.radiowaves.left.and.right")
-            Text("Mobil: \(ByteFormatter.format(payload.cellularRemainingBytes)) szabad • \(payload.daysRemaining) nap")
+            if payload.isRunoutWarning && !payload.runoutDateString.isEmpty {
+                Text("Mobil: \(ByteFormatter.format(payload.cellularRemainingBytes)) • ⚠️ Elfogy: \(payload.runoutDateString)")
+            } else {
+                Text("Mobil: \(ByteFormatter.format(payload.cellularRemainingBytes)) szabad • \(payload.daysRemaining) nap")
+            }
         }
     }
 }

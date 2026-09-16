@@ -4,17 +4,60 @@ import SwiftUI
 /// CSV export és teljes adatbázis-törlés.
 public struct SettingsView: View {
     @ObservedObject var vm: AppViewModel
+    @ObservedObject private var liveManager = LiveActivityManager.shared
     @State private var showingWipeAlert = false
     @State private var showingExportSheet = false
     @State private var exportedCSVText = ""
-    @State private var retentionDays = 30
+    @AppStorage("datascout_retention_days") private var retentionDays: Int = 30
 
     public var body: some View {
         NavigationStack {
             Form {
-                // Demó Mód Szekció
-                Section(header: Text("Tesztelés és Előnézet"), footer: Text("A demó mód 28 napos minta előzményeket, szimulált csúcsidőszakokat, anomáliát és domaineket tölt be a funkciók kipróbálásához.")) {
-                    Toggle("Demó üzemmód (Mintaadatok)", isOn: $vm.isDemoMode)
+                // Dynamic Island & Élő Követés Szekció
+                Section(
+                    header: Text("Élő Követés & Dynamic Island"),
+                    footer: Text("Valós időben kivetíti a mobil adatforgalmi egyenleget és sebességet az iPhone Dynamic Island szigetére és a zárolási képernyőre (Live Activity).")
+                ) {
+                    Toggle(isOn: Binding(
+                        get: { liveManager.isActivityRunning },
+                        set: { newValue in
+                            if newValue {
+                                vm.startLiveActivity()
+                            } else {
+                                vm.stopLiveActivity()
+                            }
+                        }
+                    )) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(liveManager.isActivityRunning ? Color(red: 0.0, green: 0.85, blue: 0.5).opacity(0.18) : Color.secondary.opacity(0.12))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "dot.radiowaves.left.and.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(liveManager.isActivityRunning ? Color(red: 0.0, green: 0.85, blue: 0.5) : .secondary)
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: 6) {
+                                    Text("Dynamic Island & Élő Nézet")
+                                        .font(.body)
+                                    if liveManager.isActivityRunning {
+                                        Text("ÉLŐ")
+                                            .font(.system(size: 8.5, weight: .black, design: .rounded))
+                                            .foregroundColor(Color(red: 0.0, green: 0.85, blue: 0.5))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1.5)
+                                            .background(Color(red: 0.0, green: 0.85, blue: 0.5).opacity(0.15))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                                Text(liveManager.isActivityRunning ? "Aktív a szigeten és a zárolási képernyőn" : "Kikapcsolva")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
                 }
 
                 // Adatkezelés és Megőrzés
@@ -72,7 +115,9 @@ public struct SettingsView: View {
                     HStack {
                         Text("Verzió")
                         Spacer()
-                        Text("DataScout v1.0.0 (Build 26.5)").foregroundColor(.secondary)
+                        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+                        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+                        Text("DataScout v\(appVersion) (Build \(buildNumber))").foregroundColor(.secondary)
                     }
                 }
 
@@ -92,6 +137,9 @@ public struct SettingsView: View {
             }
             .sheet(isPresented: $showingExportSheet) {
                 ShareSheet(items: [exportedCSVText])
+            }
+            .onChange(of: retentionDays) { _, newVal in
+                vm.updateRetentionDays(newVal)
             }
         }
     }

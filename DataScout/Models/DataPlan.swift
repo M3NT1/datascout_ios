@@ -137,6 +137,13 @@ public struct PlanCalculatedStatus: Sendable {
     public var isWarning: Bool
     public var isCritical: Bool
 
+    // MARK: - Keretkimerülési Előrejelzés (Forecast)
+    public var runoutDate: Date?
+    public var daysUntilRunout: Int?
+    public var isRunoutBeforeCycleEnd: Bool
+    public var forecastMessage: String
+    public var burnRateVelocity: Double // pl. 1.3x gyorsabb fogyás
+
     public init(
         currentPeriodStart: Date,
         currentPeriodEnd: Date,
@@ -152,7 +159,12 @@ public struct PlanCalculatedStatus: Sendable {
         projectedEndOfPeriodBytes: Int64,
         isExceeded: Bool,
         isWarning: Bool,
-        isCritical: Bool
+        isCritical: Bool,
+        runoutDate: Date? = nil,
+        daysUntilRunout: Int? = nil,
+        isRunoutBeforeCycleEnd: Bool = false,
+        forecastMessage: String = "",
+        burnRateVelocity: Double = 1.0
     ) {
         self.currentPeriodStart = currentPeriodStart
         self.currentPeriodEnd = currentPeriodEnd
@@ -169,5 +181,10 @@ public struct PlanCalculatedStatus: Sendable {
         self.isExceeded = isExceeded
         self.isWarning = isWarning
         self.isCritical = isCritical
+        self.runoutDate = runoutDate
+        self.daysUntilRunout = daysUntilRunout
+        self.isRunoutBeforeCycleEnd = isRunoutBeforeCycleEnd
+        self.forecastMessage = forecastMessage
+        self.burnRateVelocity = burnRateVelocity
     }
 }

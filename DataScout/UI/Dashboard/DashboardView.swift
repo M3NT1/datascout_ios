@@ -20,22 +20,32 @@ public struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // DEMÓ MÓD Figyelmeztető sáv (ha aktív)
-                    if vm.isDemoMode {
-                        HStack(spacing: 8) {
-                            Image(systemName: "sparkles")
-                                .foregroundColor(.yellow)
-                            Text("DEMÓ MÓD: Szimulált mintaadatok láthatók")
-                                .font(.caption.bold())
-                                .foregroundColor(.primary)
-                            Spacer()
+                    // Dynamic Island stílusú állapotkapszula (iPhone 14 Pro Max 430 pt)
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(activeStatus?.isRunoutBeforeCycleEnd == true ? Color.red : Color.green)
+                            .frame(width: 8, height: 8)
+                        Text(activeStatus?.isRunoutBeforeCycleEnd == true ? "DataScout: Keretveszély!" : "DataScout: Pajzs Aktív")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        if let status = activeStatus {
+                            Text(status.isRunoutBeforeCycleEnd ? (status.forecastMessage ?? "Kimerülés várható") : "Optimális ütem")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(status.isRunoutBeforeCycleEnd ? .red : .secondary)
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.yellow.opacity(0.18))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .padding(.horizontal)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule()
+                            .fill(Color(uiColor: .secondarySystemBackground).opacity(0.8))
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                    .padding(.horizontal)
 
                     // Fő interfész választó (Mobilnet vs Wi-Fi)
                     Picker("Hálózat", selection: $vm.selectedInterface) {
@@ -45,13 +55,12 @@ public struct DashboardView: View {
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
 
-                    // 1. Data Tank (Hero Folyadéktartály)
+                    // 1. Keretkimerülési Burn-Down Chart (Hero diagram az adott intervallumra)
                     if let status = activeStatus {
-                        DataTankView(
-                            percentUsed: status.usedPercent,
-                            usedText: ByteFormatter.format(status.totalUsedBytes),
-                            remainingText: status.remainingBytes >= 0 ? ByteFormatter.format(status.remainingBytes) : "Korlátlan",
-                            isUnlimited: activePlan.isUnlimited
+                        BurnDownChartView(
+                            status: status,
+                            plan: activePlan,
+                            dailyBars: vm.dailyBars
                         )
                     }
 
@@ -59,6 +68,9 @@ public struct DashboardView: View {
                     if let status = activeStatus {
                         let mood = MascotMood.from(percent: status.usedPercent, isUnlimited: activePlan.isUnlimited)
                         ScoutMascotView(mood: mood)
+
+                        // 2b. Keretkimerülési előrejelzés (Forecast 2026)
+                        ForecastCardView(status: status, plan: activePlan)
                     }
 
                     // 3. Fő KPI Kártyák Rács
@@ -91,7 +103,7 @@ public struct DashboardView: View {
                             kpiCard(
                                 title: "Mért nyers adat",
                                 value: ByteFormatter.format(status.rawMeasuredBytes),
-                                subtitle: "Kernel számláló",
+                                subtitle: "Ciklusban rögzítve",
                                 icon: "cpu",
                                 color: .teal
                             )
@@ -101,7 +113,12 @@ public struct DashboardView: View {
 
                     // 4. Szolgáltatói korrekció gomb
                     Button {
-                        carrierInputGB = ""
+                        if let status = activeStatus, !activePlan.isUnlimited {
+                            let currentRemGB = max(0.0, Double(status.remainingBytes) / (1024.0 * 1024.0 * 1024.0))
+                            carrierInputGB = String(format: "%.2f", currentRemGB)
+                        } else {
+                            carrierInputGB = ""
+                        }
                         showingReconcileSheet = true
                     } label: {
                         HStack {
@@ -145,6 +162,17 @@ public struct DashboardView: View {
                 .padding(.top, 10)
             }
             .navigationTitle("DataScout")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "gauge.with.dots.needle.bottom.50percent")
+                            .foregroundColor(.blue)
+                        Text("DataScout")
+                            .font(.headline.weight(.bold))
+                    }
+                }
+            }
             .sheet(isPresented: $showingReconcileSheet) {
                 reconcileSheet
             }
@@ -182,14 +210,14 @@ public struct DashboardView: View {
                 Text("Szolgáltatói egyenleg korrekciója")
                     .font(.title3.bold())
 
-                Text("A mobil- és internetszolgáltatók számlázási rendszerei gyakran késleltetve vagy kerekítve számolnak. Itt megadhatod a szolgáltatód hivatalos appjában látott elhasznált adatmennyiséget.")
+                Text("A szolgáltatód (pl. Yettel, Telekom, One / Vodafone) appjában látható még hátralévő, szabad adatmennyiség megadásával pontosíthatod az egyenlegedet. A DataScout azonnal ehhez igazítja a hátralévő keretedet és az előrejelzést.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Szolgáltató által jelentett elhasznált adat (GB):")
+                    Text("Szolgáltatónál még elérhető fennmaradó keret (GB):")
                         .font(.caption.bold())
-                    TextField("pl. 6.4", text: $carrierInputGB)
+                    TextField("pl. 1.08", text: $carrierInputGB)
                         .keyboardType(.decimalPad)
                         .padding(12)
                         .background(Color(uiColor: .tertiarySystemFill))
@@ -210,9 +238,10 @@ public struct DashboardView: View {
                 Spacer()
 
                 Button {
-                    if let gb = Double(carrierInputGB.replacingOccurrences(of: ",", with: ".")) {
+                    let sanitized = carrierInputGB.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let gb = Double(sanitized) {
                         let bytes = Int64(gb * 1024 * 1024 * 1024)
-                        vm.reconcileCarrierUsage(for: vm.selectedInterface, officialCarrierUsedBytes: bytes)
+                        vm.reconcileCarrierRemaining(for: vm.selectedInterface, officialRemainingBytes: bytes)
                     }
                     showingReconcileSheet = false
                 } label: {

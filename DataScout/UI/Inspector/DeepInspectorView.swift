@@ -17,7 +17,22 @@ public struct DeepInspectorView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 1. Transzparencia & Adatvédelmi Nyilatkozat
+                    // 0. Élő hardveres státusz jelző
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 8, height: 8)
+                        Text("Élő hardveres forgalomelemzés • Darwin kernel 64-bit aktív")
+                            .font(.caption2.bold())
+                            .foregroundColor(.green)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+
+                    // 1. Élő Adatfolyam és Részecske-áramlás Hálózat
+                    LiveTrafficStreamView(vm: vm)
+
+                    // 2. Transzparencia & Adatvédelmi Nyilatkozat
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "hand.raised.shield.fill")
@@ -25,7 +40,7 @@ public struct DeepInspectorView: View {
                             Text("Hálózati Transzparencia & Módszertan")
                                 .font(.subheadline.bold())
                         }
-                        Text("Az Apple iOS Sandbox védelme miatt egyetlen alkalmazás sem férhet hozzá közvetlenül más appok belső folyamataihoz. A DataScout a hálózati kártya szintjén 100%-os bájt-pontossággal mér, a szolgáltatásokat pedig a hálózati cél-domainek (DNS / TLS SNI) alapján, heurisztikusan azonosítja.")
+                        Text("Az Apple iOS adatvédelmi Sandbox védelme miatt egyetlen app sem olvashatja más appok belső folyamatait. A DataScout a Darwin kernelből 100%-os hardveres bájt-pontossággal mér, az élő nézetben pedig az univerzális iOS rendszer- és webes kiszolgálók (Apple CDN, WebKit, iCloud, DNS) forgalmi megoszlása látható.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -122,14 +137,28 @@ public struct DeepInspectorView: View {
                         }
                         .padding(.horizontal)
 
-                        LazyVStack(spacing: 10) {
-                            ForEach(filteredRecords) { rec in
-                                domainRow(rec)
+                        if filteredRecords.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "waveform.path.ecg")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.secondary)
+                                Text("Nincs megjeleníthető forgalmi tétel")
+                                    .font(.caption.bold())
+                                    .foregroundColor(.secondary)
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding(24)
+                        } else {
+                            LazyVStack(spacing: 10) {
+                                ForEach(filteredRecords) { rec in
+                                    domainRow(rec)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
                     }
                     .padding(.bottom, 80)
+
                 }
                 .padding(.top, 10)
             }

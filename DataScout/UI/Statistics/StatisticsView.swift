@@ -5,26 +5,56 @@ import SwiftUI
 public struct StatisticsView: View {
     @ObservedObject var vm: AppViewModel
     @State private var selectedPeriodIndex = 1 // 0: Napi, 1: Heti, 2: Havi, 3: Ciklus
+    @State private var customSummary: TrafficPeriodSummary? = nil
+    @State private var chartTitle: String = "Elmúlt 7 nap forgalma"
+    @State private var chartBars: [DailyBarItem] = []
+
+    private var activeSummary: TrafficPeriodSummary? {
+        customSummary ?? vm.periodSummary
+    }
 
     public var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    // 0. Élő hardveres státusz jelző
+                    if !vm.isDemoMode {
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 8, height: 8)
+                            Text("Élő hardveres adatfolyam • Darwin kernel mérő aktív")
+                                .font(.caption2.bold())
+                                .foregroundColor(.green)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+
                     // Időszak választó
                     Picker("Időszak", selection: $selectedPeriodIndex) {
                         Text("24 óra").tag(0)
                         Text("7 nap").tag(1)
                         Text("30 nap").tag(2)
-                        Text("Számlázási ciklus").tag(3)
+                        Text("Ciklus").tag(3)
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
 
-                    // 1. Grafikon: 7 napos le/feltöltés
-                    TrafficChartView(dailyBars: vm.dailyBars)
+                    // 1. Grafikon: Dinamikusan a kiválasztott periódus alapján
+                    TrafficChartView(
+                        title: chartTitle,
+                        dailyBars: chartBars.isEmpty ? vm.dailyBars : chartBars
+                    )
+
+                    // 1b. Intelligens Betekintések (Smart Insights - Csúcsnap, Csúcshónap, Napszak, Hétvége)
+                    if let insights = vm.smartInsights {
+                        InsightsCardView(insights: insights)
+                            .padding(.horizontal)
+                    }
 
                     // 2. Anomália kártya (ha észleltünk kiugró forgalmat)
-                    if let summary = vm.periodSummary, summary.anomalyDetected, let msg = summary.anomalyMessage {
+                    if let summary = activeSummary, summary.anomalyDetected, let msg = summary.anomalyMessage {
                         HStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.red)
@@ -47,7 +77,7 @@ public struct StatisticsView: View {
                     }
 
                     // 3. Összehasonlítás az előző időszakkal
-                    if let summary = vm.periodSummary {
+                    if let summary = activeSummary {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Változás az előző időszakhoz képest")
                                 .font(.headline)
@@ -77,7 +107,7 @@ public struct StatisticsView: View {
                     }
 
                     // 4. Letöltés és Feltöltés részletes aránya (RX / TX)
-                    if let summary = vm.periodSummary {
+                    if let summary = activeSummary {
                         VStack(alignment: .leading, spacing: 14) {
                             Text("Le- és feltöltés aránya")
                                 .font(.headline)
@@ -107,7 +137,7 @@ public struct StatisticsView: View {
                     }
 
                     // 5. Csúcsidőszak és Megfigyelési Lefedettség
-                    if let summary = vm.periodSummary {
+                    if let summary = activeSummary {
                         HStack(spacing: 14) {
                             // Csúcsóra
                             VStack(alignment: .leading, spacing: 6) {
@@ -129,15 +159,15 @@ public struct StatisticsView: View {
                             .background(Color(uiColor: .secondarySystemBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                            // Megfigyelési lefedettség
+                            // Napi átlagos forgalom
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Image(systemName: "shield.checkered").foregroundColor(.green)
-                                    Text("Lefedettség").font(.caption.bold()).foregroundColor(.secondary)
+                                    Image(systemName: "chart.bar.fill").foregroundColor(.green)
+                                    Text("Napi átlag").font(.caption.bold()).foregroundColor(.secondary)
                                 }
-                                Text(String(format: "%.1f%%", summary.coveragePercent))
+                                Text(ByteFormatter.format(summary.dailyAverageBytes))
                                     .font(.title3.bold())
-                                Text("A kiesés nem = 0 bájt")
+                                Text("Időszak átlaga")
                                     .font(.caption2).foregroundColor(.secondary)
                             }
                             .padding(14)
@@ -152,6 +182,24 @@ public struct StatisticsView: View {
                 .padding(.top, 10)
             }
             .navigationTitle("Statisztikák")
+            .navigationBarTitleDisplayMode(.inline)
+            .task(id: selectedPeriodIndex) {
+                async let s = vm.fetchPeriodSummary(periodIndex: selectedPeriodIndex)
+                async let c = vm.fetchChartData(periodIndex: selectedPeriodIndex)
+                let (summary, chart) = await (s, c)
+                customSummary = summary
+                chartTitle = chart.title
+                chartBars = chart.bars
+            }
+            .onChange(of: vm.lastRefreshedAt) { _, _ in
+                guard !vm.isDemoMode else { return }
+                Task {
+                    let chart = await vm.fetchChartData(periodIndex: selectedPeriodIndex)
+                    chartTitle = chart.title
+                    chartBars = chart.bars
+                    customSummary = await vm.fetchPeriodSummary(periodIndex: selectedPeriodIndex)
+                }
+            }
         }
     }
 

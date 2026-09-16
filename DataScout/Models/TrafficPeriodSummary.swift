@@ -38,6 +38,10 @@ public struct TrafficPeriodSummary: Codable, Sendable {
     public var anomalyDetected: Bool
     public var anomalyMessage: String?
     
+    /// Napi átlagos forgalom a vizsgált időszakban
+    public var dailyAverageBytes: UInt64
+    public var dailyAverageCellularBytes: UInt64
+
     /// Megfigyelési lefedettség százalékban (pl. 99.2% ha kevés volt a kiesés)
     public var coveragePercent: Double
     /// Rendszer újraindítások száma a vizsgált időszakban
@@ -57,7 +61,9 @@ public struct TrafficPeriodSummary: Codable, Sendable {
         anomalyDetected: Bool = false,
         anomalyMessage: String? = nil,
         coveragePercent: Double = 100.0,
-        rebootCount: Int = 0
+        rebootCount: Int = 0,
+        dailyAverageBytes: UInt64 = 0,
+        dailyAverageCellularBytes: UInt64 = 0
     ) {
         self.startDate = startDate
         self.endDate = endDate
@@ -73,6 +79,8 @@ public struct TrafficPeriodSummary: Codable, Sendable {
         self.anomalyMessage = anomalyMessage
         self.coveragePercent = coveragePercent
         self.rebootCount = rebootCount
+        self.dailyAverageBytes = dailyAverageBytes
+        self.dailyAverageCellularBytes = dailyAverageCellularBytes
     }
 }
 

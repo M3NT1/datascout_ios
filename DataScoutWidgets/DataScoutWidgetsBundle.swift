@@ -5,6 +5,7 @@ import SwiftUI
 struct DataScoutWidgetsBundle: WidgetBundle {
     var body: some Widget {
         DataScoutWidget()
+        DataScoutLiveActivityWidget()
         if #available(iOS 18.0, *) {
             DataScoutControlWidget()
         }

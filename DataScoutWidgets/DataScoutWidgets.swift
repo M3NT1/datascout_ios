@@ -86,6 +86,7 @@ public struct DataScoutWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             DataScoutWidgetEntryView(entry: entry)
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("DataScout Keretfigyelő")
         .description("Kövesd nyomon mobilnet és Wi-Fi adatkeretedet közvetlenül a kezdő- és zárolási képernyőn.")
         .supportedFamilies([

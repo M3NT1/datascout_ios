@@ -3,6 +3,7 @@ import SwiftUI
 /// Mobilinternet és Wi-Fi adatkeretek és számlázási ciklusok részletes konfigurációja.
 /// Támogatja a havi fordulónapot, a 7, 14, 28, 30 napos rolling ciklusokat,
 /// a korlátlan csomagot, a kezdő offsetet és a rollover adatmennyiséget.
+/// Numerikus szöveges beviteli mezőkkel tetszőleges méretű adatkeret megadásához.
 public struct DataPlanConfigView: View {
     @ObservedObject var vm: AppViewModel
     @State private var targetInterface: InterfaceType = .cellular
@@ -12,14 +13,18 @@ public struct DataPlanConfigView: View {
     @State private var startDayOfMonth: Int = 1
     @State private var customStartDate: Date = Date()
     @State private var customEndDate: Date = Date().addingTimeInterval(30 * 86400)
-    @State private var quotaGB: Double = 15.0
+    
+    // Szöveges beviteli mezők tetszőleges gigabájt értékekhez (csúszka korlátok nélkül)
+    @State private var quotaText: String = "15.00"
+    @State private var rolloverText: String = "0.00"
+    @State private var startingRemainingText: String = "15.00"
+    
     @State private var isUnlimited: Bool = false
-    @State private var manualStartingGB: Double = 0.0
-    @State private var rolloverGB: Double = 0.0
     @State private var warningPercent: Double = 80.0
     @State private var criticalPercent: Double = 95.0
 
     @State private var showingSavedToast = false
+
 
     public var body: some View {
         NavigationStack {
@@ -54,39 +59,107 @@ public struct DataPlanConfigView: View {
                     }
                 }
 
-                // Adatkeret és csomagtípus
-                Section(header: Text("Adatkeret beállítása")) {
+                // Adatkeret és csomagtípus (Beviteli mezők tetszőleges keretmérethez)
+                Section(
+                    header: Text("Adatkeret beállítása"),
+                    footer: Text("Bármilyen méretű adatkeret beírható (pl. 20 GB, 150 GB, 500 GB vagy 2000 GB). Vesszőt és pontot is elfogad.")
+                ) {
                     Toggle("Korlátlan csomag", isOn: $isUnlimited)
 
                     if !isUnlimited {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
+                        // 1. Elérhető keret beviteli mező
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("Elérhető keret:")
-                                Spacer()
-                                Text(String(format: "%.1f GB", quotaGB)).bold()
+                                    .font(.body)
+                                Text("Havi/ciklus alapkeret")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
-                            Slider(value: $quotaGB, in: 1.0...100.0, step: 0.5)
+                            Spacer()
+                            TextField("15", text: $quotaText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .frame(minWidth: 80, maxWidth: 110)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(uiColor: .tertiarySystemFill))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            Text("GB")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.secondary)
                         }
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
+                        // Gyorsválasztó gombok a kényelemért
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach([5, 10, 15, 30, 50, 100, 250, 500], id: \.self) { gb in
+                                    let isSelected = parseDouble(quotaText) == Double(gb)
+                                    Button("\(gb) GB") {
+                                        quotaText = "\(gb)"
+                                    }
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(isSelected ? Color.blue : Color(uiColor: .tertiarySystemFill))
+                                    .foregroundColor(isSelected ? .white : .primary)
+                                    .clipShape(Capsule())
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+
+                        // 2. Áthozott keret (Rollover) beviteli mező
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("Áthozott keret (Rollover):")
-                                Spacer()
-                                Text(String(format: "%.1f GB", rolloverGB)).bold()
+                                    .font(.body)
+                                Text("Előző ciklusból átmentett adat")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
-                            Slider(value: $rolloverGB, in: 0.0...20.0, step: 0.5)
+                            Spacer()
+                            TextField("0.0", text: $rolloverText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .frame(minWidth: 80, maxWidth: 110)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(uiColor: .tertiarySystemFill))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            Text("GB")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.secondary)
                         }
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Már elhasznált a ciklus elején:")
-                                Spacer()
-                                Text(String(format: "%.1f GB", manualStartingGB)).bold()
+                        // 3. Fennmaradó keret a beállításkor / megkezdett ciklusnál
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Fennmaradó keret a beállításkor:")
+                                    .font(.body)
+                                Text("A szolgáltatónál még szabad adatkeret (pl. 1,08 GB)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
-                            Slider(value: $manualStartingGB, in: 0.0...quotaGB, step: 0.1)
+                            Spacer()
+                            TextField("15.00", text: $startingRemainingText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .frame(minWidth: 80, maxWidth: 110)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(uiColor: .tertiarySystemFill))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            Text("GB")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
+
 
                 // Figyelmeztetési küszöbök
                 if !isUnlimited {
@@ -118,7 +191,7 @@ public struct DataPlanConfigView: View {
                     } label: {
                         HStack {
                             Spacer()
-                            Text("Keretkonfiguráció mentése")
+                            Label("Keretkonfiguráció mentése", systemImage: "checkmark.circle.fill")
                                 .bold()
                             Spacer()
                         }
@@ -126,6 +199,7 @@ public struct DataPlanConfigView: View {
                 }
             }
             .navigationTitle("Adatkeret-beállítás")
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 loadFormFromPlan(targetInterface == .cellular ? vm.cellularPlan : vm.wifiPlan)
             }
@@ -137,23 +211,46 @@ public struct DataPlanConfigView: View {
         }
     }
 
+    private func parseDouble(_ text: String) -> Double {
+        let sanitized = text.replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Double(sanitized) ?? 0.0
+    }
+
+    private func formatGB(_ value: Double) -> String {
+        String(format: "%.2f", value)
+    }
+
     private func loadFormFromPlan(_ plan: DataPlan) {
         self.cycleType = plan.cycleType
         self.startDayOfMonth = plan.startDayOfMonth
         self.customStartDate = plan.customStartDate
         self.customEndDate = plan.customEndDate
         self.isUnlimited = plan.isUnlimited
-        self.quotaGB = Double(plan.quotaBytes) / (1024 * 1024 * 1024)
-        self.rolloverGB = Double(plan.rolloverBytes) / (1024 * 1024 * 1024)
-        self.manualStartingGB = Double(plan.manualStartingUsedBytes) / (1024 * 1024 * 1024)
+        
+        let quota = Double(plan.quotaBytes) / (1024 * 1024 * 1024)
+        let rollover = Double(plan.rolloverBytes) / (1024 * 1024 * 1024)
+        let startingUsed = Double(plan.manualStartingUsedBytes) / (1024 * 1024 * 1024)
+        let startingRemaining = max(0.0, quota - startingUsed)
+
+        self.quotaText = formatGB(quota)
+        self.rolloverText = formatGB(rollover)
+        self.startingRemainingText = formatGB(startingRemaining)
+        
         self.warningPercent = plan.warningThresholdPercent
         self.criticalPercent = plan.criticalThresholdPercent
     }
 
     private func saveCurrentForm() {
+        let quotaGB = parseDouble(quotaText)
+        let rolloverGB = parseDouble(rolloverText)
+        let startingRemainingGB = parseDouble(startingRemainingText)
+
         let quotaBytes = Int64(quotaGB * 1024 * 1024 * 1024)
         let rolloverBytes = Int64(rolloverGB * 1024 * 1024 * 1024)
-        let manualStartingBytes = Int64(manualStartingGB * 1024 * 1024 * 1024)
+        let startingRemainingBytes = Int64(startingRemainingGB * 1024 * 1024 * 1024)
+        let manualStartingBytes = max(0, quotaBytes - startingRemainingBytes)
+
 
         var days = 30
         switch cycleType {

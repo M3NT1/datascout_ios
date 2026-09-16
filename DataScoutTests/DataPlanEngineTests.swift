@@ -125,4 +125,96 @@ final class DataPlanEngineTests: XCTestCase {
         XCTAssertEqual(status.safeDailyBudgetBytes, expectedBudget)
         XCTAssertGreaterThan(status.safeDailyBudgetBytes, 0)
     }
+
+    /// 6. Teszteli a felhasználó által megadott fennmaradó keretből számított induló egyenleget (pl. 1.08 GB maradt)
+    func testStartingRemainingCalculation() {
+        let quotaBytes: Int64 = 15 * 1024 * 1024 * 1024 // 15 GB csomag
+        let startingRemainingGB = 1.08 // 1.08 GB van hátra a szolgáltatónál
+        let startingRemainingBytes = Int64(startingRemainingGB * 1024 * 1024 * 1024)
+
+        // Induló felhasznált keret
+        let manualStartingUsed = max(0, quotaBytes - startingRemainingBytes)
+        let plan = DataPlan(
+            type: .cellular,
+            quotaBytes: quotaBytes,
+            manualStartingUsedBytes: manualStartingUsed
+        )
+
+        let status = engine.calculateStatus(plan: plan, rawMeasuredBytes: 0)
+        XCTAssertEqual(status.remainingBytes, startingRemainingBytes, "A fennmaradó keret pontosan 1.08 GB kell legyen")
+        XCTAssertEqual(status.totalUsedBytes, quotaBytes - startingRemainingBytes)
+    }
+
+    /// 7. Teszteli a szolgáltatói egyenleg korrekcióját fennmaradó keret megadásával
+    func testReconcileRemainingQuota() {
+        var plan = DataPlan(
+            type: .cellular,
+            quotaBytes: 10 * 1024 * 1024 * 1024, // 10 GB
+            manualStartingUsedBytes: 0,
+            carrierReconciliationOffsetBytes: 0
+        )
+
+        let rawMeasured: Int64 = 2 * 1024 * 1024 * 1024 // 2 GB mért adat
+        let desiredRemainingGB = 6.85 // Szolgáltató szerint 6.85 GB van még hátra
+        let desiredRemainingBytes = Int64(desiredRemainingGB * 1024 * 1024 * 1024)
+
+        // targetUsed = totalQuota - desiredRemaining = 10 GB - 6.85 GB = 3.15 GB
+        let targetUsed = max(0, plan.totalEffectiveQuotaBytes - desiredRemainingBytes)
+        let offset = targetUsed - (rawMeasured + plan.manualStartingUsedBytes)
+        plan.carrierReconciliationOffsetBytes = offset
+
+        let status = engine.calculateStatus(plan: plan, rawMeasuredBytes: rawMeasured)
+        XCTAssertEqual(status.remainingBytes, desiredRemainingBytes, "A korrekció után a fennmaradó keret pontosan a megadott 6.85 GB kell legyen")
+    }
+
+    /// 8. Teszteli a felhasználó pontos állapotát: 15 GB csomag, 24-i fordulónap, szept. 16, 13.92 GB maradt
+    func testUserScenarioCalculation() {
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 9
+        comps.day = 16
+        comps.hour = 12
+        let testDate = calendar.date(from: comps)!
+
+        let quotaBytes: Int64 = 15 * 1024 * 1024 * 1024 // 15 GB
+        let carrierRemainingGB = 13.92
+        let carrierRemainingBytes = Int64(carrierRemainingGB * 1024 * 1024 * 1024)
+        let startingUsed = max(0, quotaBytes - carrierRemainingBytes) // 1.08 GB
+
+        let plan = DataPlan(
+            type: .cellular,
+            cycleType: .monthly,
+            startDayOfMonth: 24,
+            quotaBytes: quotaBytes,
+            manualStartingUsedBytes: startingUsed
+        )
+
+        let (start, end) = engine.calculatePeriodDates(for: plan, asOf: testDate)
+        let startComps = calendar.dateComponents([.year, .month, .day], from: start)
+        let endComps = calendar.dateComponents([.year, .month, .day], from: end)
+
+        // Ciklus: Augusztus 24 - Szeptember 23 23:59:59
+        XCTAssertEqual(startComps.month, 8)
+        XCTAssertEqual(startComps.day, 24)
+        XCTAssertEqual(endComps.month, 9)
+        XCTAssertEqual(endComps.day, 23)
+
+        let status = engine.calculateStatus(plan: plan, rawMeasuredBytes: 0, asOf: testDate)
+
+        // 1. Pontosan 8 nap van hátra
+        XCTAssertEqual(status.daysRemaining, 8, "Szeptember 16-tól a 24-i fordulóig pontosan 8 napnak kell lennie")
+
+        // 2. Szabad keret pontosan 13.92 GB
+        let remainingGB = Double(status.remainingBytes) / (1024 * 1024 * 1024)
+        XCTAssertEqual(remainingGB, 13.92, accuracy: 0.01)
+
+        // 3. Felhasznált adat pontosan 1.08 GB
+        let usedGB = Double(status.totalUsedBytes) / (1024 * 1024 * 1024)
+        XCTAssertEqual(usedGB, 1.08, accuracy: 0.01)
+
+        // 4. Státusz: nem fogy el, kitart a fordulónapig!
+        XCTAssertFalse(status.isRunoutBeforeCycleEnd)
+        XCTAssertTrue(status.forecastMessage.contains("Kitart a fordulónapig"))
+    }
 }
+

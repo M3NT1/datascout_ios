@@ -1,0 +1,22 @@
+# Xcode
+.DS_Store
+*/.DS_Store
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+DerivedData/
+build/
+*.moved-aside
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Swift Package Manager
+.build/
+Packages/
