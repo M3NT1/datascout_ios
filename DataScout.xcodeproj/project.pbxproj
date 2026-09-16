@@ -21,6 +21,7 @@
 		2D475E3DBBEBD7B2BE3CF934 /* ByteFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F643C577358B8319168AE3DB /* ByteFormatter.swift */; };
 		35631F77477F51C641439E9C /* ForecastCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF491986A3D3F1CBAA270052 /* ForecastCardView.swift */; };
 		37298EB81E5879FFB9507DD9 /* ForecastEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4DC7C453B1046638CF8D15 /* ForecastEngineTests.swift */; };
+		3740BA652D95E3508E6DD449 /* NetworkDiagnosticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6E5E4DCC4D7DA6729E09D7 /* NetworkDiagnosticsService.swift */; };
 		3A7C6AD96E0BF8D850502532 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8AC3532C611E763EA7DE35F /* StatisticsView.swift */; };
 		3ADD88A3F8F7510282F8DE3E /* AccessoryWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 555973EDA3109A0993E9A29A /* AccessoryWidgets.swift */; };
 		3B486344AF92CDB88A12AF49 /* GaugeBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E363041DD2725A06B37FCA17 /* GaugeBarView.swift */; };
@@ -131,6 +132,7 @@
 		8DE5CE4AFA43E71185F98493 /* InsightsCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsCardView.swift; sourceTree = "<group>"; };
 		9305D551DBA20C5C0784346A /* ControlWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlWidgets.swift; sourceTree = "<group>"; };
 		996F714C06AA21A6E0BC04FD /* DataScoutLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataScoutLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		9A6E5E4DCC4D7DA6729E09D7 /* NetworkDiagnosticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsService.swift; sourceTree = "<group>"; };
 		9D848485EBAC8F0E7499B0F3 /* NetworkHardwareMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkHardwareMonitorTests.swift; sourceTree = "<group>"; };
 		A8A0149CA05C6930AF916F23 /* TrafficHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficHistoryStore.swift; sourceTree = "<group>"; };
 		A9FBACBA7A59ABFE889FAA6C /* DeepInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepInspectorView.swift; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 				F66DA32251DF1164DB958CA2 /* DataPlanEngine.swift */,
 				B4F383C08E16FED952F96263 /* DemoDataProvider.swift */,
 				B060E2DE6B6D4D5658D6787A /* LiveActivityManager.swift */,
+				9A6E5E4DCC4D7DA6729E09D7 /* NetworkDiagnosticsService.swift */,
 				D00ADB728B71E48930C2A04E /* NetworkHardwareMonitor.swift */,
 				D273469B5472746FEA6F7CB4 /* TrafficClassifier.swift */,
 				A8A0149CA05C6930AF916F23 /* TrafficHistoryStore.swift */,
@@ -480,6 +483,7 @@
 				ED4250B55754F38AEB35FFFA /* LiveActivityManager.swift in Sources */,
 				DF11CBBD48D6575E75BBB630 /* LiveTrafficStreamView.swift in Sources */,
 				6D47E4A1347214281AD90A68 /* MainTabView.swift in Sources */,
+				3740BA652D95E3508E6DD449 /* NetworkDiagnosticsService.swift in Sources */,
 				78B1DF463FE747885BF68A02 /* NetworkHardwareMonitor.swift in Sources */,
 				71471679B6BDC16C62D2B2C0 /* NetworkSnapshot.swift in Sources */,
 				8B067BEE8896394A43454953 /* ScoutMascotView.swift in Sources */,
@@ -694,7 +698,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = TYZM6FTNXW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -715,7 +719,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -783,7 +787,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = TYZM6FTNXW;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -798,7 +802,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

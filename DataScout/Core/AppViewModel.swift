@@ -32,6 +32,12 @@ public final class AppViewModel: ObservableObject {
     @Published public var smartInsights: SmartInsights? = nil
     @Published public var activeServiceIds: Set<String> = UserServicesStore.shared.getActiveServiceIds()
 
+    // MARK: - Hardveres Diagnosztika & Hálózati Minőség
+    @Published public var hardwareCellularStats: InterfaceBytes = InterfaceBytes()
+    @Published public var hardwareWifiStats: InterfaceBytes = InterfaceBytes()
+    @Published public var networkQuality: NetworkQualityMetrics = NetworkQualityMetrics()
+    @Published public var isTestingQuality: Bool = false
+
     @Published public var lastRefreshedAt: Date = Date()
     @Published public var isHardwareRefreshing: Bool = false
 
@@ -109,6 +115,10 @@ public final class AppViewModel: ObservableObject {
         self.currentCellularSpeed = (self.currentCellularSpeed * 0.3) + (rawCellSpeed * 0.7)
         self.currentWifiSpeed = (self.currentWifiSpeed * 0.3) + (rawWifiSpeed * 0.7)
         self.currentTotalSpeed = self.currentCellularSpeed + self.currentWifiSpeed
+
+        // Hardveres csomagszámlálók és bájtok frissítése
+        self.hardwareCellularStats = newSnapshot.cellular
+        self.hardwareWifiStats = newSnapshot.wifi
 
         // Rögzítjük a deltat a tárolóban
         await historyStore.recordDelta(delta, newSnapshot: newSnapshot)
@@ -409,5 +419,52 @@ public final class AppViewModel: ObservableObject {
             await calculateAndPublishStatuses()
         }
     }
+
+    // MARK: - Hálózati Minőség & Kategória Összesítés
+
+    public func runNetworkQualityTest() async {
+        guard !isTestingQuality else { return }
+        isTestingQuality = true
+        let result = await NetworkDiagnosticsService.shared.measureNetworkQuality()
+        self.networkQuality = result
+        isTestingQuality = false
+    }
+
+    public var categoryDistribution: [CategoryDistributionItem] {
+        let grouped = classifier.groupByCategory(records: domainRecords)
+        let total = grouped.values.reduce(0, +)
+        guard total > 0 else { return [] }
+
+        return ContentCategory.allCases.compactMap { cat in
+            guard let bytes = grouped[cat], bytes > 0 else { return nil }
+            let pct = Double(bytes) / Double(total)
+            let appsText: String
+            switch cat {
+            case .streaming: appsText = "HBO Max, YouTube, Netflix, Spotify"
+            case .social: appsText = "Instagram, TikTok, Facebook, Messenger"
+            case .work: appsText = "ChatGPT, Teams, Slack, GitHub"
+            case .browsing: appsText = "Safari, Híroldalak, Wikipédia"
+            case .cloud: appsText = "iCloud, Felhőtárhely, DNS"
+            case .updates: appsText = "App Store, iOS Szoftverfrissítés"
+            case .adsAndTrackers: appsText = "Google Ads, DoubleClick, Követők"
+            case .other: appsText = "Egyéb hálózati forgalom"
+            }
+            return CategoryDistributionItem(
+                category: cat,
+                bytes: bytes,
+                percentage: pct,
+                typicalApps: appsText
+            )
+        }.sorted { $0.bytes > $1.bytes }
+    }
+}
+
+/// Összesített kategória-forgalom elem
+public struct CategoryDistributionItem: Identifiable, Sendable {
+    public var id: String { category.rawValue }
+    public let category: ContentCategory
+    public let bytes: UInt64
+    public let percentage: Double
+    public let typicalApps: String
 }
 
