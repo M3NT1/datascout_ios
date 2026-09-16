@@ -30,6 +30,7 @@ public final class AppViewModel: ObservableObject {
     @Published public var domainRecords: [DomainTrafficRecord] = []
     @Published public var adTrackerStats: AdTrackerStatistics = AdTrackerStatistics()
     @Published public var smartInsights: SmartInsights? = nil
+    @Published public var activeServiceIds: Set<String> = UserServicesStore.shared.getActiveServiceIds()
 
     @Published public var lastRefreshedAt: Date = Date()
     @Published public var isHardwareRefreshing: Bool = false
@@ -185,10 +186,14 @@ public final class AppViewModel: ObservableObject {
         )
         self.wifiStatus = calculatedWifi
 
-        // 3. Élő domain és reklám-statisztika frissítése élő módban
+        // 3. Élő domain és reklám-statisztika frissítése élő módban a mintázat-felismerővel
         if !isDemoMode {
             let totalBytes = UInt64(max(0, calculatedCellular.totalUsedBytes) + max(0, calculatedWifi.totalUsedBytes))
-            self.domainRecords = classifier.synthesizeLiveDomainRecords(totalBytes: totalBytes)
+            self.domainRecords = classifier.synthesizeLiveDomainRecords(
+                totalBytes: totalBytes,
+                currentSpeed: currentTotalSpeed,
+                activeServiceIds: activeServiceIds
+            )
             self.adTrackerStats = classifier.calculateAdTrackerStats(records: domainRecords)
             saveLivePlans()
         }
@@ -373,6 +378,36 @@ public final class AppViewModel: ObservableObject {
 
     public func exportCSV() async -> String {
         await historyStore.exportCSV()
+    }
+
+    // MARK: - Szolgáltatás-profil Kezelés
+
+    public func toggleActiveService(id: String) {
+        UserServicesStore.shared.toggleService(id: id)
+        self.activeServiceIds = UserServicesStore.shared.getActiveServiceIds()
+        Task {
+            await calculateAndPublishStatuses()
+        }
+    }
+
+    public func isServiceActive(id: String) -> Bool {
+        activeServiceIds.contains(id)
+    }
+
+    public func enableAllServices() {
+        UserServicesStore.shared.enableAll()
+        self.activeServiceIds = UserServicesStore.shared.getActiveServiceIds()
+        Task {
+            await calculateAndPublishStatuses()
+        }
+    }
+
+    public func resetServicesToDefault() {
+        UserServicesStore.shared.resetToDefault()
+        self.activeServiceIds = UserServicesStore.shared.getActiveServiceIds()
+        Task {
+            await calculateAndPublishStatuses()
+        }
     }
 }
 

@@ -63,4 +63,48 @@ final class TrafficClassifierTests: XCTestCase {
         XCTAssertEqual(hbo?.category, .streaming)
         XCTAssertGreaterThan(hbo?.estimatedBytes ?? 0, 0)
     }
+
+    /// 4. Teszteli a kibővített 54+ szolgáltatói katalógus felismerését
+    func testServiceCatalogRecognition() {
+        let gpt = classifier.classify(domain: "chatgpt.com")
+        XCTAssertEqual(gpt.serviceName, "ChatGPT (OpenAI)")
+        XCTAssertEqual(gpt.category, .work)
+
+        let telex = classifier.classify(domain: "telex.hu")
+        XCTAssertEqual(telex.serviceName, "Telex.hu")
+        XCTAssertEqual(telex.category, .browsing)
+
+        let sky = classifier.classify(domain: "skyshowtime.com")
+        XCTAssertEqual(sky.serviceName, "SkyShowtime")
+        XCTAssertEqual(sky.category, .streaming)
+    }
+
+    /// 5. Teszteli, hogy KIZÁRÓLAG az aktívnak jelölt szolgáltatások jelennek meg
+    func testOnlyActiveServicesAppear() {
+        let onlyHBO: Set<String> = ["hbomax"]
+        let records = TrafficPatternEngine.shared.synthesizeRecords(
+            totalBytes: 200 * 1024 * 1024,
+            currentSpeedBytesPerSec: 2_000_000,
+            activeServiceIds: onlyHBO
+        )
+
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records.first?.domain, "max.com")
+        XCTAssertEqual(records.first?.serviceName, "HBO Max / Max (HBO Go)")
+
+        // Ellenőrizzük, hogy a nem aktív appok (pl. Netflix, TikTok, YouTube) véletlenül sincsenek benne
+        XCTAssertNil(records.first(where: { $0.domain.contains("netflix") }))
+        XCTAssertNil(records.first(where: { $0.domain.contains("tiktok") }))
+        XCTAssertNil(records.first(where: { $0.domain.contains("youtube") }))
+    }
+
+    /// 6. Teszteli a 0 bájtos forgalommentes állapotot
+    func testZeroTotalBytesProducesEmptyRecords() {
+        let records = TrafficPatternEngine.shared.synthesizeRecords(
+            totalBytes: 0,
+            currentSpeedBytesPerSec: 0,
+            activeServiceIds: ["hbomax", "youtube"]
+        )
+        XCTAssertTrue(records.isEmpty)
+    }
 }

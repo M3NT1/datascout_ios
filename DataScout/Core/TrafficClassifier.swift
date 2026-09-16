@@ -75,13 +75,16 @@ public final class TrafficClassifier: Sendable {
         DomainRule(pattern: "drive.google.com", serviceName: "Google Drive", category: .cloud, isAdOrTracker: false)
     ]
 
-    /// Egy domain osztályozása név és minta alapján
+    /// Egy domain osztályozása név és minta alapján a ServiceCatalog és beépített szabályok szerint
     public func classify(domain: String) -> (serviceName: String, category: ContentCategory, isAdOrTracker: Bool, confidence: AttributionConfidence) {
-        let lower = domain.lowercased()
         for rule in domainRules {
-            if lower.contains(rule.pattern) {
+            if ServiceCatalog.matchesDomain(host: domain, pattern: rule.pattern) {
                 return (rule.serviceName, rule.category, rule.isAdOrTracker, .domainHeuristic)
             }
+        }
+        if let service = ServiceCatalog.service(matching: domain) {
+            let isAd = (service.category == .adsAndTrackers)
+            return (service.name, service.category, isAd, .domainHeuristic)
         }
         return (domain, .browsing, false, .unknown)
     }
@@ -109,54 +112,19 @@ public final class TrafficClassifier: Sendable {
         return result
     }
 
-    /// Élő hardveres mérésekből heurisztikus domain- és szolgáltatás-profil készítése
-    /// Reprezentálja az iOS rendszerfolyamatait és a vezető streaming szolgáltatásokat (pl. HBO Max / Max, YouTube, Netflix).
-    public func synthesizeLiveDomainRecords(totalBytes: UInt64) -> [DomainTrafficRecord] {
-        // Ha nincs forgalom vagy nagyon kevés, minimális reprezentatív bázist adunk
-        let effectiveBytes = max(totalBytes, 20 * 1024 * 1024)
-
-        // Valós, univerzális iOS rendszer-, streaming és webes kategóriák
-        let weights: [(domain: String, name: String, cat: ContentCategory, isAd: Bool, weight: Double)] = [
-            ("max.com", "HBO Max / Max (HBO Go)", .streaming, false, 0.30),
-            ("cdn-apple.com", "Apple Rendszer & iCloud Szolgáltatások", .cloud, false, 0.22),
-            ("googlevideo.com", "YouTube Videó & Média CDN", .streaming, false, 0.18),
-            ("swcdn.apple.com", "iOS Szoftverfrissítések & Biztonság", .updates, false, 0.10),
-            ("webkit.org", "Safari & WebKit Webböngészés", .browsing, false, 0.08),
-            ("nflxvideo.net", "Netflix Videó Stream", .streaming, false, 0.05),
-            ("dns.apple.com", "DNS Névfeloldás & Hálózati Kapcsolat", .cloud, false, 0.03),
-            ("doubleclick.net", "Webes Hirdetések & Reklámkérések", .adsAndTrackers, true, 0.02),
-            ("metrics.apple.com", "Rendszerdiagnosztika & Telemetria", .adsAndTrackers, true, 0.01),
-            ("captive.apple.com", "Hálózati Állapot-ellenőrzés", .browsing, false, 0.01)
-        ]
-
-        var records: [DomainTrafficRecord] = []
-        for w in weights {
-            let estimated = UInt64(Double(effectiveBytes) * w.weight)
-            let avgReqSize: UInt64
-            switch w.cat {
-            case .streaming:
-                avgReqSize = 4 * 1024 * 1024 // 4 MB videószeletek
-            case .updates:
-                avgReqSize = 5 * 1024 * 1024
-            case .cloud:
-                avgReqSize = 500 * 1024
-            default:
-                avgReqSize = 120 * 1024
-            }
-            let count = max(3, Int(estimated / max(1, avgReqSize)))
-
-            records.append(DomainTrafficRecord(
-                domain: w.domain,
-                serviceName: w.name,
-                category: w.cat,
-                requestCount: count,
-                estimatedBytes: estimated,
-                confidence: .domainHeuristic,
-                isAdOrTracker: w.isAd
-            ))
-        }
-
-        return records
+    /// Élő hardveres mérésekből intelligens domain- és szolgáltatás-profil készítése
+    /// Szigorúan figyelembe veszi a felhasználó aktív alkalmazásait és a pillanatnyi forgalmi sebességet.
+    public func synthesizeLiveDomainRecords(
+        totalBytes: UInt64,
+        currentSpeed: Double = 0.0,
+        activeServiceIds: Set<String>? = nil
+    ) -> [DomainTrafficRecord] {
+        let activeIds = activeServiceIds ?? UserServicesStore.shared.getActiveServiceIds()
+        return TrafficPatternEngine.shared.synthesizeRecords(
+            totalBytes: totalBytes,
+            currentSpeedBytesPerSec: currentSpeed,
+            activeServiceIds: activeIds
+        )
     }
 }
 

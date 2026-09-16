@@ -13,9 +13,11 @@
 		0A3F261B20D0865FB3B1082F /* LargeWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 249EB6157D61AFD444BD9169 /* LargeWidgetView.swift */; };
 		20F02B2174A3B8DD72EA71FC /* DataScoutLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996F714C06AA21A6E0BC04FD /* DataScoutLiveActivityAttributes.swift */; };
 		2140A7D89B41028E0FADA297 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C914B5103B7D108C3583FF7F /* SettingsView.swift */; };
+		23D145C264C9048543FF93FB /* ActiveServicesSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C4E11548F6856B6CBB3D09 /* ActiveServicesSheet.swift */; };
 		2449E023C3D8EF4905E61EE0 /* SmartInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B18DCF4EFA01E0532EB9B1 /* SmartInsights.swift */; };
 		25E2DEE393DCC04D0BA0DCEF /* SmallWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0563678141F8AE71707D6145 /* SmallWidgetView.swift */; };
 		296EDEDED2816602365DEA9F /* DataTankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780974CAF05CA425DE0F7D7E /* DataTankView.swift */; };
+		2CF1FCAFB4AE72E76B66DB19 /* ServiceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2553B8DAC755A4C1FF740F /* ServiceCatalog.swift */; };
 		2D475E3DBBEBD7B2BE3CF934 /* ByteFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F643C577358B8319168AE3DB /* ByteFormatter.swift */; };
 		35631F77477F51C641439E9C /* ForecastCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF491986A3D3F1CBAA270052 /* ForecastCardView.swift */; };
 		37298EB81E5879FFB9507DD9 /* ForecastEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4DC7C453B1046638CF8D15 /* ForecastEngineTests.swift */; };
@@ -47,6 +49,7 @@
 		A4961057B708D1063E103802 /* DomainTraffic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8EB71AF01EBD36B98E868D /* DomainTraffic.swift */; };
 		A595EFDEC6DEFF732B27DA71 /* SmartInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B18DCF4EFA01E0532EB9B1 /* SmartInsights.swift */; };
 		A9F32463B321E41DEA81BFA0 /* DataPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3691C12FBEA258B4AC049CD6 /* DataPlan.swift */; };
+		BCAC7C374E6AE91E77E69DBF /* ServiceCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2553B8DAC755A4C1FF740F /* ServiceCatalog.swift */; };
 		C7A8724F8244239B2394B352 /* ByteFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F643C577358B8319168AE3DB /* ByteFormatter.swift */; };
 		C7E79D6917606744AB22DE54 /* AnomalyDetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06FA12CE52F197A5121B582 /* AnomalyDetectionTests.swift */; };
 		CA816401A555B3C651268131 /* DataPlanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66DA32251DF1164DB958CA2 /* DataPlanEngine.swift */; };
@@ -63,6 +66,7 @@
 		F1EFF1088BFBE4B1829668B7 /* DataPlanConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A22991E15BC8122D06AC99 /* DataPlanConfigView.swift */; };
 		F40C226DD93DC3DC37E81162 /* DataScoutWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4185128D78FB19A3F33362FE /* DataScoutWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F5C2F928DE0288F7F0EB9B99 /* NetworkHardwareMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D848485EBAC8F0E7499B0F3 /* NetworkHardwareMonitorTests.swift */; };
+		FEBE13D12ECD086136CB61F5 /* TrafficPatternEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40F453F4A8A39A11E6C40877 /* TrafficPatternEngine.swift */; };
 		FEFECB11C301B22255616541 /* DataScoutApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C835D68D7814EB1040781ABA /* DataScoutApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -100,11 +104,14 @@
 /* Begin PBXFileReference section */
 		0563678141F8AE71707D6145 /* SmallWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmallWidgetView.swift; sourceTree = "<group>"; };
 		0E4DC7C453B1046638CF8D15 /* ForecastEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastEngineTests.swift; sourceTree = "<group>"; };
+		19C4E11548F6856B6CBB3D09 /* ActiveServicesSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveServicesSheet.swift; sourceTree = "<group>"; };
 		1A4317724149038C016BDAEE /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassTabBar.swift; sourceTree = "<group>"; };
 		249EB6157D61AFD444BD9169 /* LargeWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LargeWidgetView.swift; sourceTree = "<group>"; };
+		2D2553B8DAC755A4C1FF740F /* ServiceCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceCatalog.swift; sourceTree = "<group>"; };
 		3691C12FBEA258B4AC049CD6 /* DataPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPlan.swift; sourceTree = "<group>"; };
 		37AD77F1E542FB111D7C93B5 /* MediumWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediumWidgetView.swift; sourceTree = "<group>"; };
 		3D070B020E4FB73A2A076759 /* TrafficClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficClassifierTests.swift; sourceTree = "<group>"; };
+		40F453F4A8A39A11E6C40877 /* TrafficPatternEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficPatternEngine.swift; sourceTree = "<group>"; };
 		4185128D78FB19A3F33362FE /* DataScoutWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = DataScoutWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		42899498B685EC5A29E33641 /* TrafficChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficChartView.swift; sourceTree = "<group>"; };
 		4A8984BAD172AD19C58EF0B2 /* ScoutMascotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoutMascotView.swift; sourceTree = "<group>"; };
@@ -171,6 +178,7 @@
 		0D335A32785225F6DB3E735F /* Inspector */ = {
 			isa = PBXGroup;
 			children = (
+				19C4E11548F6856B6CBB3D09 /* ActiveServicesSheet.swift */,
 				A9FBACBA7A59ABFE889FAA6C /* DeepInspectorView.swift */,
 			);
 			path = Inspector;
@@ -251,6 +259,7 @@
 				D00ADB728B71E48930C2A04E /* NetworkHardwareMonitor.swift */,
 				D273469B5472746FEA6F7CB4 /* TrafficClassifier.swift */,
 				A8A0149CA05C6930AF916F23 /* TrafficHistoryStore.swift */,
+				40F453F4A8A39A11E6C40877 /* TrafficPatternEngine.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -314,6 +323,7 @@
 				996F714C06AA21A6E0BC04FD /* DataScoutLiveActivityAttributes.swift */,
 				7D8EB71AF01EBD36B98E868D /* DomainTraffic.swift */,
 				D5021522FDC1161D63731045 /* NetworkSnapshot.swift */,
+				2D2553B8DAC755A4C1FF740F /* ServiceCatalog.swift */,
 				D6B18DCF4EFA01E0532EB9B1 /* SmartInsights.swift */,
 				82E9494E9A79623F5EBE332A /* TrafficPeriodSummary.swift */,
 			);
@@ -448,6 +458,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23D145C264C9048543FF93FB /* ActiveServicesSheet.swift in Sources */,
 				96083833B9A7972BF8A54746 /* AppGroupBridge.swift in Sources */,
 				F0217069DE0EBCA4D7132094 /* AppViewModel.swift in Sources */,
 				A0AED0412665C35812A79A72 /* BurnDownChartView.swift in Sources */,
@@ -472,12 +483,14 @@
 				78B1DF463FE747885BF68A02 /* NetworkHardwareMonitor.swift in Sources */,
 				71471679B6BDC16C62D2B2C0 /* NetworkSnapshot.swift in Sources */,
 				8B067BEE8896394A43454953 /* ScoutMascotView.swift in Sources */,
+				2CF1FCAFB4AE72E76B66DB19 /* ServiceCatalog.swift in Sources */,
 				2140A7D89B41028E0FADA297 /* SettingsView.swift in Sources */,
 				A595EFDEC6DEFF732B27DA71 /* SmartInsights.swift in Sources */,
 				3A7C6AD96E0BF8D850502532 /* StatisticsView.swift in Sources */,
 				6469335C9647B2894A702DDA /* TrafficChartView.swift in Sources */,
 				DC8F31352F8AC5F018C2977B /* TrafficClassifier.swift in Sources */,
 				CB20293A32533D6A5511480A /* TrafficHistoryStore.swift in Sources */,
+				FEBE13D12ECD086136CB61F5 /* TrafficPatternEngine.swift in Sources */,
 				09A78B8ADA898D3C920F2EAE /* TrafficPeriodSummary.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -500,6 +513,7 @@
 				0A3F261B20D0865FB3B1082F /* LargeWidgetView.swift in Sources */,
 				482842D8F8343FD765A3B76C /* MediumWidgetView.swift in Sources */,
 				061234DDADEF7B6860818510 /* NetworkSnapshot.swift in Sources */,
+				BCAC7C374E6AE91E77E69DBF /* ServiceCatalog.swift in Sources */,
 				25E2DEE393DCC04D0BA0DCEF /* SmallWidgetView.swift in Sources */,
 				2449E023C3D8EF4905E61EE0 /* SmartInsights.swift in Sources */,
 				67DECC6EF430170469FB0D42 /* TrafficPeriodSummary.swift in Sources */,
@@ -680,7 +694,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = TYZM6FTNXW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -701,7 +715,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -769,7 +783,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = TYZM6FTNXW;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -784,7 +798,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -5,6 +5,7 @@ import SwiftUI
 public struct DeepInspectorView: View {
     @ObservedObject var vm: AppViewModel
     @State private var selectedCategoryFilter: ContentCategory? = nil
+    @State private var showActiveServicesSheet = false
 
     private var filteredRecords: [DomainTrafficRecord] {
         if let cat = selectedCategoryFilter {
@@ -128,12 +129,30 @@ public struct DeepInspectorView: View {
                     // 4. Azonosított Domainek & Szolgáltatások Listája
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Top célállomások és szolgáltatások")
-                                .font(.headline)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Azonosított forgalom és appok")
+                                    .font(.headline)
+                                Text("\(filteredRecords.count) aktív tétel • \(vm.activeServiceIds.count) figyelt szolgáltatás")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+
                             Spacer()
-                            Text("\(filteredRecords.count) tétel")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+
+                            Button {
+                                showActiveServicesSheet = true
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "slider.horizontal.3")
+                                    Text("Saját appok (\(vm.activeServiceIds.count))")
+                                }
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.blue.opacity(0.12))
+                                .foregroundColor(.blue)
+                                .clipShape(Capsule())
+                            }
                         }
                         .padding(.horizontal)
 
@@ -163,6 +182,9 @@ public struct DeepInspectorView: View {
                 .padding(.top, 10)
             }
             .navigationTitle("Forgalom & Domainek")
+            .sheet(isPresented: $showActiveServicesSheet) {
+                ActiveServicesSheet(vm: vm)
+            }
         }
     }
 
@@ -185,9 +207,12 @@ public struct DeepInspectorView: View {
     }
 
     private func domainRow(_ rec: DomainTrafficRecord) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let serviceDef = ServiceCatalog.service(matching: rec.domain)
+        let iconName = serviceDef?.icon ?? rec.category.iconName
+
+        return VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Image(systemName: rec.category.iconName)
+                Image(systemName: iconName)
                     .foregroundColor(rec.isAdOrTracker ? .red : .blue)
                     .frame(width: 24)
 
