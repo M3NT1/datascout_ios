@@ -127,6 +127,16 @@ public struct SettingsView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+
+                // Alsó térköz a lebegő menüsávhoz
+                Section {
+                    Color.clear
+                        .frame(height: 70)
+                        .listRowBackground(Color.clear)
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 40)
             }
             .navigationTitle("Beállítások")
             .confirmationDialog("Biztosan törölni szeretnéd az összes rögzített adatot?", isPresented: $showingWipeAlert, titleVisibility: .visible) {

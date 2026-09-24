@@ -195,14 +195,35 @@ public struct DataPlanConfigView: View {
                         HStack {
                             Spacer()
                             Label("Keretkonfiguráció mentése", systemImage: "checkmark.circle.fill")
-                                .bold()
+                                .font(.headline)
+                                .foregroundColor(.white)
                             Spacer()
                         }
+                        .padding(.vertical, 8)
                     }
+                    .listRowBackground(Color.blue)
                 }
+
+                // Alsó biztonsági térköz a lebegő menüsávhoz (LiquidGlassTabBar)
+                Section {
+                    Color.clear
+                        .frame(height: 70)
+                        .listRowBackground(Color.clear)
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 40)
             }
             .navigationTitle("Adatkeret-beállítás")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Mentés") {
+                        saveCurrentForm()
+                    }
+                    .bold()
+                }
+            }
             .onAppear {
                 loadFormFromPlan(targetInterface == .cellular ? vm.cellularPlan : vm.wifiPlan)
             }
