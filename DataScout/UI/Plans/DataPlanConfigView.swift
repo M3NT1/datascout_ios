@@ -42,7 +42,10 @@ public struct DataPlanConfigView: View {
                 }
 
                 // Ciklus típusa és fordulónap
-                Section(header: Text("Elszámolási időszak")) {
+                Section(
+                    header: Text("Elszámolási időszak"),
+                    footer: Text("💡 Tipp: A fordulónap a megújulás első napja (amikor a szolgáltató jóváírja az új keretet). Ha a számlázásod 24-én éjfélkor zárul (0 nap van hátra), akkor az új ciklus 25-én indul, így a 25. napot válaszd.")
+                ) {
                     Picker("Ciklus típusa", selection: $cycleType) {
                         ForEach(CycleType.allCases, id: \.self) { c in
                             Text(c.displayName).tag(c)
