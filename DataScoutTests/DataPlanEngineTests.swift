@@ -216,5 +216,42 @@ final class DataPlanEngineTests: XCTestCase {
         XCTAssertFalse(status.isRunoutBeforeCycleEnd)
         XCTAssertTrue(status.forecastMessage.contains("Kitart a fordulónapig"))
     }
+
+    /// 9. Teszteli a felhasználói esetet: 15 GB csomag, 1.76 GB mért forgalom,
+    /// a felhasználó beállítja a 14.06 GB tényleges fennmaradó egyenleget.
+    /// Az appnak pontosan 14.06 GB-ot kell mutatnia, fordulónapon pedig tiszta 15.00 GB-tal indulnia.
+    func testExactReconciliationAndCycleRollover() {
+        let totalQuota: Int64 = 15 * 1024 * 1024 * 1024 // 15 GB
+        let rawMeasured: Int64 = Int64(1.76 * 1024 * 1024 * 1024) // 1.76 GB
+        let targetRemainingGB = 14.06
+        let targetRemainingBytes = Int64(targetRemainingGB * 1024 * 1024 * 1024)
+
+        // Számítás ahogy a DataPlanConfigView / AppViewModel végzi:
+        let targetUsedBytes = max(0, totalQuota - targetRemainingBytes)
+        let calculatedOffset = targetUsedBytes - rawMeasured
+
+        var plan = DataPlan(
+            type: .cellular,
+            cycleType: .monthly,
+            startDayOfMonth: 25,
+            quotaBytes: totalQuota,
+            manualStartingUsedBytes: 0,
+            carrierReconciliationOffsetBytes: calculatedOffset,
+            lastCycleStartDate: Date()
+        )
+
+        let status = engine.calculateStatus(plan: plan, rawMeasuredBytes: rawMeasured)
+        let remainingGB = Double(status.remainingBytes) / (1024 * 1024 * 1024)
+        XCTAssertEqual(remainingGB, targetRemainingGB, accuracy: 0.01, "Azonnal a beírt 14.06 GB-nak kell megjelennie")
+
+        // Fordulónap szimulálása: a ciklusváltáskor az AppViewModel lenullázza az offseteket:
+        plan.manualStartingUsedBytes = 0
+        plan.carrierReconciliationOffsetBytes = 0
+
+        // Új ciklus kezdetén a nyers mért adat 0
+        let newCycleStatus = engine.calculateStatus(plan: plan, rawMeasuredBytes: 0)
+        let newRemainingGB = Double(newCycleStatus.remainingBytes) / (1024 * 1024 * 1024)
+        XCTAssertEqual(newRemainingGB, 15.00, accuracy: 0.01, "Fordulónapon a teljes 15.00 GB tiszta lappal indul")
+    }
 }
 

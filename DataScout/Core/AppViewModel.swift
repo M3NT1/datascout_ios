@@ -172,8 +172,23 @@ public final class AppViewModel: ObservableObject {
     private func calculateAndPublishStatuses() async {
         let now = Date()
 
-        // 1. Mobilnet periódus és forgalom számítás
+        // 1. Mobilnet periódus és automatikus fordulónap-kezelés
         let (cellStart, cellEnd) = planEngine.calculatePeriodDates(for: cellularPlan, asOf: now)
+        var shouldSavePlans = false
+
+        if let lastCellStart = cellularPlan.lastCycleStartDate {
+            if cellStart > lastCellStart {
+                // Fordulónap! Automatikusan tiszta lappal indítjuk az új hónapot:
+                cellularPlan.manualStartingUsedBytes = 0
+                cellularPlan.carrierReconciliationOffsetBytes = 0
+                cellularPlan.lastCycleStartDate = cellStart
+                shouldSavePlans = true
+            }
+        } else {
+            cellularPlan.lastCycleStartDate = cellStart
+            shouldSavePlans = true
+        }
+
         let cellSummary = await historyStore.getPeriodSummary(from: cellStart, to: cellEnd)
         let cellRawBytes = Int64(cellSummary.cellular.totalBytes)
         
@@ -184,8 +199,24 @@ public final class AppViewModel: ObservableObject {
         )
         self.cellularStatus = calculatedCellular
 
-        // 2. Wi-Fi periódus és forgalom számítás
+        // 2. Wi-Fi periódus és automatikus fordulónap-kezelés
         let (wifiStart, wifiEnd) = planEngine.calculatePeriodDates(for: wifiPlan, asOf: now)
+        if let lastWifiStart = wifiPlan.lastCycleStartDate {
+            if wifiStart > lastWifiStart {
+                wifiPlan.manualStartingUsedBytes = 0
+                wifiPlan.carrierReconciliationOffsetBytes = 0
+                wifiPlan.lastCycleStartDate = wifiStart
+                shouldSavePlans = true
+            }
+        } else {
+            wifiPlan.lastCycleStartDate = wifiStart
+            shouldSavePlans = true
+        }
+
+        if shouldSavePlans && !isDemoMode {
+            saveLivePlans()
+        }
+
         let wifiSummary = await historyStore.getPeriodSummary(from: wifiStart, to: wifiEnd)
         let wifiRawBytes = Int64(wifiSummary.wifi.totalBytes)
 
@@ -348,11 +379,15 @@ public final class AppViewModel: ObservableObject {
     /// Szolgáltatói egyenleg korrekciója (megőrzi a nyers mérést, offsetet állít be)
     public func reconcileCarrierUsage(for type: InterfaceType, officialCarrierUsedBytes: Int64) {
         if type == .cellular, let current = cellularStatus {
-            let offset = officialCarrierUsedBytes - (current.rawMeasuredBytes + cellularPlan.manualStartingUsedBytes)
+            let offset = officialCarrierUsedBytes - current.rawMeasuredBytes
+            cellularPlan.manualStartingUsedBytes = 0
             cellularPlan.carrierReconciliationOffsetBytes = offset
+            cellularPlan.lastCycleStartDate = current.currentPeriodStart
         } else if type == .wifi, let current = wifiStatus {
-            let offset = officialCarrierUsedBytes - (current.rawMeasuredBytes + wifiPlan.manualStartingUsedBytes)
+            let offset = officialCarrierUsedBytes - current.rawMeasuredBytes
+            wifiPlan.manualStartingUsedBytes = 0
             wifiPlan.carrierReconciliationOffsetBytes = offset
+            wifiPlan.lastCycleStartDate = current.currentPeriodStart
         }
         saveLivePlans()
         Task { await calculateAndPublishStatuses() }

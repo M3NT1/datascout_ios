@@ -25,7 +25,12 @@ public struct DataPlanConfigView: View {
 
     @State private var showingSavedToast = false
 
-
+    private enum Field: Hashable {
+        case quota
+        case rollover
+        case remaining
+    }
+    @FocusState private var focusedField: Field?
     public var body: some View {
         NavigationStack {
             Form {
@@ -65,7 +70,7 @@ public struct DataPlanConfigView: View {
                 // Adatkeret és csomagtípus (Beviteli mezők tetszőleges keretmérethez)
                 Section(
                     header: Text("Adatkeret beállítása"),
-                    footer: Text("Bármilyen méretű adatkeret beírható (pl. 20 GB, 150 GB, 500 GB vagy 2000 GB). Vesszőt és pontot is elfogad.")
+                    footer: Text("Bármilyen méretű adatkeret beírható (pl. 20 GB, 150 GB vagy 2000 GB). A jelenlegi szabad keret megadásával a mért forgalom azonnal szinkronba kerül a szolgáltatóval, a fordulónapon pedig automatikusan tiszta lappal indul.")
                 ) {
                     Toggle("Korlátlan csomag", isOn: $isUnlimited)
 
@@ -82,6 +87,7 @@ public struct DataPlanConfigView: View {
                             Spacer()
                             TextField("15", text: $quotaText)
                                 .keyboardType(.decimalPad)
+                                .focused($focusedField, equals: .quota)
                                 .multilineTextAlignment(.trailing)
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .frame(minWidth: 80, maxWidth: 110)
@@ -125,6 +131,7 @@ public struct DataPlanConfigView: View {
                             Spacer()
                             TextField("0.0", text: $rolloverText)
                                 .keyboardType(.decimalPad)
+                                .focused($focusedField, equals: .rollover)
                                 .multilineTextAlignment(.trailing)
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .frame(minWidth: 80, maxWidth: 110)
@@ -137,18 +144,19 @@ public struct DataPlanConfigView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        // 3. Fennmaradó keret a beállításkor / megkezdett ciklusnál
+                        // 3. Jelenlegi szabad keret (Szolgáltatói egyenleg)
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Fennmaradó keret a beállításkor:")
+                                Text("Jelenlegi szabad keret:")
                                     .font(.body)
-                                Text("A szolgáltatónál még szabad adatkeret (pl. 1,08 GB)")
+                                Text("Szolgáltatói egyenleg (pl. 14,06 GB)")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
                             TextField("15.00", text: $startingRemainingText)
                                 .keyboardType(.decimalPad)
+                                .focused($focusedField, equals: .remaining)
                                 .multilineTextAlignment(.trailing)
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .frame(minWidth: 80, maxWidth: 110)
@@ -211,12 +219,20 @@ public struct DataPlanConfigView: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: 40)
             }
             .navigationTitle("Adatkeret-beállítás")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Kész") {
+                        hideKeyboard()
+                    }
+                    .bold()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Mentés") {
                         saveCurrentForm()
@@ -233,6 +249,11 @@ public struct DataPlanConfigView: View {
                 Text("A megadott keret és számlázási ciklus azonnal frissült a főképernyőn és a widgetekben.")
             }
         }
+    }
+
+    private func hideKeyboard() {
+        focusedField = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private func parseDouble(_ text: String) -> Double {
@@ -254,18 +275,28 @@ public struct DataPlanConfigView: View {
         
         let quota = Double(plan.quotaBytes) / (1024 * 1024 * 1024)
         let rollover = Double(plan.rolloverBytes) / (1024 * 1024 * 1024)
-        let startingUsed = Double(plan.manualStartingUsedBytes) / (1024 * 1024 * 1024)
-        let startingRemaining = max(0.0, quota - startingUsed)
+
+        let currentStatus = plan.type == .cellular ? vm.cellularStatus : vm.wifiStatus
+        let currentRemaining: Double
+        if let currentStatus = currentStatus {
+            currentRemaining = Double(currentStatus.remainingBytes) / (1024 * 1024 * 1024)
+        } else {
+            let totalQuota = plan.totalEffectiveQuotaBytes
+            let used = plan.manualStartingUsedBytes + plan.carrierReconciliationOffsetBytes
+            currentRemaining = Double(max(0, totalQuota - used)) / (1024 * 1024 * 1024)
+        }
 
         self.quotaText = formatGB(quota)
         self.rolloverText = formatGB(rollover)
-        self.startingRemainingText = formatGB(startingRemaining)
+        self.startingRemainingText = formatGB(max(0.0, currentRemaining))
         
         self.warningPercent = plan.warningThresholdPercent
         self.criticalPercent = plan.criticalThresholdPercent
     }
 
     private func saveCurrentForm() {
+        hideKeyboard()
+
         let quotaGB = parseDouble(quotaText)
         let rolloverGB = parseDouble(rolloverText)
         let startingRemainingGB = parseDouble(startingRemainingText)
@@ -273,8 +304,15 @@ public struct DataPlanConfigView: View {
         let quotaBytes = Int64(quotaGB * 1024 * 1024 * 1024)
         let rolloverBytes = Int64(rolloverGB * 1024 * 1024 * 1024)
         let startingRemainingBytes = Int64(startingRemainingGB * 1024 * 1024 * 1024)
-        let manualStartingBytes = max(0, quotaBytes - startingRemainingBytes)
 
+        let totalEffectiveQuota = quotaBytes + rolloverBytes
+        let currentStatus = targetInterface == .cellular ? vm.cellularStatus : vm.wifiStatus
+        let rawBytes = currentStatus?.rawMeasuredBytes ?? 0
+
+        // Cél felhasznált adat = összes keret - kívánt fennmaradó keret
+        let targetUsedBytes = max(0, totalEffectiveQuota - startingRemainingBytes)
+        // Szolgáltatói korrekció: targetUsed = rawBytes + offset => offset = targetUsed - rawBytes
+        let calculatedOffset = targetUsedBytes - rawBytes
 
         var days = 30
         switch cycleType {
@@ -285,7 +323,7 @@ public struct DataPlanConfigView: View {
         default: days = 30
         }
 
-        let updatedPlan = DataPlan(
+        var tempPlan = DataPlan(
             type: targetInterface,
             cycleType: cycleType,
             startDayOfMonth: startDayOfMonth,
@@ -294,17 +332,20 @@ public struct DataPlanConfigView: View {
             cycleLengthDays: days,
             quotaBytes: isUnlimited ? 0 : quotaBytes,
             isUnlimited: isUnlimited,
-            manualStartingUsedBytes: isUnlimited ? 0 : manualStartingBytes,
-            carrierReconciliationOffsetBytes: targetInterface == .cellular ? vm.cellularPlan.carrierReconciliationOffsetBytes : vm.wifiPlan.carrierReconciliationOffsetBytes,
+            manualStartingUsedBytes: 0,
+            carrierReconciliationOffsetBytes: isUnlimited ? 0 : calculatedOffset,
             rolloverBytes: isUnlimited ? 0 : rolloverBytes,
             warningThresholdPercent: warningPercent,
             criticalThresholdPercent: criticalPercent
         )
 
+        let (cycleStart, _) = DataPlanEngine.shared.calculatePeriodDates(for: tempPlan, asOf: Date())
+        tempPlan.lastCycleStartDate = cycleStart
+
         if targetInterface == .cellular {
-            vm.updateCellularPlan(updatedPlan)
+            vm.updateCellularPlan(tempPlan)
         } else {
-            vm.updateWifiPlan(updatedPlan)
+            vm.updateWifiPlan(tempPlan)
         }
 
         showingSavedToast = true

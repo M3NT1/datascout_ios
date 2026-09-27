@@ -12,8 +12,8 @@ settings:
     DEVELOPMENT_TEAM: TYZM6FTNXW
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: "Apple Development"
-    MARKETING_VERSION: "1.1.2"
-    CURRENT_PROJECT_VERSION: "5"
+    MARKETING_VERSION: "1.1.3"
+    CURRENT_PROJECT_VERSION: "6"
 targets:
   DataScout:
     type: application

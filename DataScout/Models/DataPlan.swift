@@ -78,6 +78,9 @@ public struct DataPlan: Codable, Sendable, Identifiable {
     /// Kritikus figyelmeztetési küszöb % (pl. 95.0%)
     public var criticalThresholdPercent: Double
 
+    /// Az utolsó ismert számlázási ciklus kezdete (fordulónap automatikus nullázásához)
+    public var lastCycleStartDate: Date?
+
     public init(
         id: UUID = UUID(),
         type: InterfaceType = .cellular,
@@ -92,7 +95,8 @@ public struct DataPlan: Codable, Sendable, Identifiable {
         carrierReconciliationOffsetBytes: Int64 = 0,
         rolloverBytes: Int64 = 0,
         warningThresholdPercent: Double = 80.0,
-        criticalThresholdPercent: Double = 95.0
+        criticalThresholdPercent: Double = 95.0,
+        lastCycleStartDate: Date? = nil
     ) {
         self.id = id
         self.type = type
@@ -108,6 +112,7 @@ public struct DataPlan: Codable, Sendable, Identifiable {
         self.rolloverBytes = rolloverBytes
         self.warningThresholdPercent = warningThresholdPercent
         self.criticalThresholdPercent = criticalThresholdPercent
+        self.lastCycleStartDate = lastCycleStartDate
     }
 
     /// Teljes elérhető keret a ciklusban (alapkeret + rollover)
