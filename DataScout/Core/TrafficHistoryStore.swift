@@ -184,7 +184,7 @@ public actor TrafficHistoryStore {
 
                 let hourForm = DateFormatter()
                 hourForm.dateFormat = "HH:mm"
-                let label = bucketIndex == 0 ? "Most" : hourForm.string(from: bucketEnd)
+                let label = hourForm.string(from: bucketEnd)
 
                 bars.append(DailyBarItem(
                     date: bucketEnd,

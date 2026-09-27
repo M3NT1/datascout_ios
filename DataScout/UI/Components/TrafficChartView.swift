@@ -28,7 +28,16 @@ public struct TrafficChartView: View {
         return indices.sorted()
     }
 
+    private var isHourlyView: Bool {
+        title.contains("24 óra") || dailyBars.contains { $0.dayLabel.contains(":") }
+    }
+
     private func milestoneLabel(for item: DailyBarItem, totalCount: Int) -> String {
+        // 24 órás vagy óránkénti idősávnál az óra:perc jelenjen meg (pl. 23:47, 03:47, 19:47), nem a 'Ma'
+        if isHourlyView {
+            return item.dayLabel
+        }
+
         let calendar = Calendar.current
         if calendar.isDateInToday(item.date) {
             return "Ma"
@@ -43,10 +52,29 @@ public struct TrafficChartView: View {
     }
 
     private func formatFullDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "hu_HU")
-        formatter.dateFormat = "MMMM d. (EEEE)"
-        return formatter.string(from: date)
+        let calendar = Calendar.current
+        let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "hu_HU")
+        timeFormatter.dateFormat = "HH:mm"
+        let timeStr = timeFormatter.string(from: date)
+
+        if isHourlyView {
+            if calendar.isDateInToday(date) {
+                return "Ma \(timeStr)"
+            } else if calendar.isDateInYesterday(date) {
+                return "Tegnap \(timeStr)"
+            } else {
+                let df = DateFormatter()
+                df.locale = Locale(identifier: "hu_HU")
+                df.dateFormat = "MMM d. HH:mm"
+                return df.string(from: date)
+            }
+        } else {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "hu_HU")
+            formatter.dateFormat = "MMMM d. (EEEE)"
+            return formatter.string(from: date)
+        }
     }
 
     public var body: some View {
